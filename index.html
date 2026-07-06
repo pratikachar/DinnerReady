@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fridge Chef - Your Personal AI Chef</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700;9..144,900&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FAF3E7; --bg-alt:#F1E4CD; --surface:rgba(255,255,255,.74); --surface-solid:#FFFDF8;
+  --ink:#2B2118; --ink-soft:#7A6A56; --ink-faint:#A6957D;
+  --gold:#D9A441; --gold-deep:#B9852A; --red:#B33A2E; --green:#4C7A5D;
+  --border:rgba(43,33,24,.13); --shadow:0 24px 48px -28px rgba(43,33,24,.35);
+  --radius:20px;
+}
+.dark{
+  --bg:#161109; --bg-alt:#1E170F; --surface:rgba(38,30,21,.78); --surface-solid:#211A12;
+  --ink:#F3E9D8; --ink-soft:#C9B79C; --ink-faint:#8A7A63;
+  --gold:#E8B85B; --gold-deep:#F0C878; --red:#E2645A; --green:#79AE8B;
+  --border:rgba(243,233,216,.13); --shadow:0 24px 48px -28px rgba(0,0,0,.65);
+}
+*{box-sizing:border-box;}
+body{margin:0;}
+html,body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;transition:background .4s,color .4s;}
+body{
+  background-image:
+    radial-gradient(circle at 12% 8%, rgba(217,164,65,.14), transparent 40%),
+    radial-gradient(circle at 88% 92%, rgba(179,58,46,.10), transparent 45%);
+  min-height:100vh;
+}
+h1,h2,h3,.font-display{font-family:'Fraunces',serif;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+::selection{background:var(--gold);color:#1a1208;}
+
+/* Layout */
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px 80px;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:22px 20px;max-width:1180px;margin:0 auto;}
+.brand{display:flex;align-items:center;gap:12px;}
+.brand-mark{width:42px;height:42px;border-radius:50%;background:conic-gradient(var(--gold),var(--red),var(--green),var(--gold));display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:var(--shadow);}
+.brand-mark span{background:var(--surface-solid);width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+.brand-name{font-size:22px;font-weight:700;letter-spacing:-.02em;}
+.brand-tag{font-size:12px;color:var(--ink-soft);letter-spacing:.08em;text-transform:uppercase;}
+.mode-toggle{border:1px solid var(--border);background:var(--surface);color:var(--ink);border-radius:100px;padding:9px 16px;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:8px;font-family:'Inter';transition:.2s;}
+.mode-toggle:hover{border-color:var(--gold);}
+
+/* Hero */
+.hero{padding:24px 0 44px;text-align:center;}
+.hero h1{font-size:clamp(34px,5.4vw,58px);font-weight:900;line-height:1.02;margin:0 0 14px;letter-spacing:-.02em;}
+.hero h1 em{font-style:italic;color:var(--gold-deep);}
+.hero p{max-width:560px;margin:0 auto;color:var(--ink-soft);font-size:16.5px;line-height:1.6;}
+
+/* Card / panel */
+.panel{background:var(--surface);backdrop-filter:blur(14px);border:1px solid var(--border);border-radius:28px;box-shadow:var(--shadow);padding:32px;margin-bottom:28px;}
+.panel-title{display:flex;align-items:center;gap:10px;font-size:22px;font-weight:700;margin:0 0 6px;}
+.panel-sub{color:var(--ink-soft);font-size:13.5px;margin:0 0 22px;}
+.eyebrow{font-size:11.5px;text-transform:uppercase;letter-spacing:.14em;color:var(--gold-deep);font-weight:700;}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:22px;}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;}
+@media(max-width:760px){.grid2,.grid3{grid-template-columns:1fr;}}
+
+label.field-label{display:block;font-size:13px;font-weight:600;margin-bottom:8px;color:var(--ink);}
+.hint{font-size:12px;color:var(--ink-faint);margin-top:6px;}
+
+textarea,input[type=text],input[type=number],select{
+  width:100%;background:var(--surface-solid);border:1.5px solid var(--border);border-radius:14px;
+  padding:12px 14px;font-family:'Inter';font-size:14.5px;color:var(--ink);outline:none;transition:.2s;
+}
+textarea{resize:vertical;min-height:88px;}
+textarea:focus,input:focus,select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(217,164,65,.18);}
+select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%237A6A56' stroke-width='2' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;}
+
+.row-inline{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.btn{border:none;cursor:pointer;font-family:'Inter';font-weight:600;font-size:14px;border-radius:100px;padding:11px 20px;display:inline-flex;align-items:center;gap:8px;transition:.2s;white-space:nowrap;}
+.btn-primary{background:linear-gradient(135deg,var(--gold),var(--gold-deep));color:#241705;box-shadow:0 10px 24px -8px rgba(217,164,65,.55);}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 14px 28px -8px rgba(217,164,65,.65);}
+.btn-ghost{background:var(--surface-solid);color:var(--ink);border:1.5px solid var(--border);}
+.btn-ghost:hover{border-color:var(--gold);}
+.btn-sm{padding:8px 14px;font-size:12.5px;}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;min-height:10px;}
+.chip{background:var(--surface-solid);border:1px solid var(--border);padding:6px 12px 6px 12px;border-radius:100px;font-size:12.5px;display:flex;align-items:center;gap:6px;}
+.chip button{background:none;border:none;color:var(--ink-faint);cursor:pointer;font-size:13px;line-height:1;padding:0;}
+.chip button:hover{color:var(--red);}
+
+.pill-select{display:flex;flex-wrap:wrap;gap:8px;}
+.pill{border:1.5px solid var(--border);background:var(--surface-solid);padding:8px 14px;border-radius:100px;font-size:13px;cursor:pointer;transition:.15s;user-select:none;}
+.pill.active{background:var(--gold);border-color:var(--gold);color:#241705;font-weight:700;}
+.pill:hover{border-color:var(--gold);}
+
+.check-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;}
+.check-item{display:flex;align-items:center;gap:8px;font-size:13.5px;background:var(--surface-solid);border:1px solid var(--border);border-radius:12px;padding:9px 11px;cursor:pointer;}
+.check-item input{accent-color:var(--gold-deep);width:16px;height:16px;}
+
+input[type=range]{-webkit-appearance:none;width:100%;height:6px;border-radius:10px;background:var(--border);}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--gold);border:3px solid var(--surface-solid);box-shadow:0 2px 6px rgba(0,0,0,.25);cursor:pointer;}
+.slider-labels{display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink-faint);margin-top:6px;}
+.slider-val{text-align:center;font-weight:700;color:var(--gold-deep);font-size:13.5px;margin-top:4px;}
+
+.find-bar{display:flex;justify-content:center;gap:14px;margin-top:8px;flex-wrap:wrap;}
+
+/* Loading */
+.loading{display:none;flex-direction:column;align-items:center;gap:16px;padding:60px 20px;text-align:center;}
+.loading.show{display:flex;}
+.pot{width:74px;height:74px;position:relative;}
+.pot .steam{position:absolute;top:-18px;left:50%;width:5px;height:20px;background:var(--ink-faint);border-radius:10px;opacity:.6;transform:translateX(-50%);animation:steam 1.6s ease-in-out infinite;}
+.pot .steam:nth-child(2){left:38%;animation-delay:.3s;}
+.pot .steam:nth-child(3){left:62%;animation-delay:.6s;}
+@keyframes steam{0%{transform:translate(-50%,10px) scaleY(.6);opacity:0;}30%{opacity:.7;}100%{transform:translate(-50%,-24px) scaleY(1.2);opacity:0;}}
+.pot .base{position:absolute;bottom:0;left:0;right:0;height:44px;background:linear-gradient(135deg,var(--gold),var(--red));border-radius:0 0 20px 20px;}
+.pot .lid{position:absolute;bottom:40px;left:6px;right:6px;height:14px;background:var(--ink);border-radius:100px;}
+.loading p{font-family:'Fraunces';font-size:18px;font-weight:600;}
+.loading .sub{font-family:'Inter';font-size:13px;color:var(--ink-soft);font-weight:400;}
+
+/* Results header */
+.results-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:22px;}
+.results-head h2{font-size:28px;margin:0;}
+
+/* Recipe cards */
+.recipes{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;}
+@media(max-width:980px){.recipes{grid-template-columns:1fr;}}
+.recipe-card{background:var(--surface);border:1px solid var(--border);border-radius:26px;box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;}
+.recipe-head{padding:22px 22px 16px;position:relative;}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:6px 12px;border-radius:100px;margin-bottom:12px;}
+.badge.chef{background:rgba(217,164,65,.22);color:var(--gold-deep);}
+.badge.healthy{background:rgba(76,122,93,.20);color:var(--green);}
+.badge.creative{background:rgba(179,58,46,.18);color:var(--red);}
+.recipe-name{font-size:23px;font-weight:700;margin:0 0 6px;line-height:1.15;}
+.recipe-meta{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--ink-soft);}
+.recipe-meta span{background:var(--surface-solid);border:1px solid var(--border);padding:4px 9px;border-radius:100px;}
+
+.gauge-row{display:flex;align-items:center;gap:16px;padding:0 22px 18px;}
+.gauge{position:relative;width:64px;height:64px;flex-shrink:0;}
+.gauge svg{transform:rotate(-90deg);}
+.gauge .pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono';font-weight:600;font-size:13px;}
+.gauge-label{font-size:12px;color:var(--ink-soft);}
+.gauge-label b{display:block;font-family:'Fraunces';font-size:15px;color:var(--ink);}
+
+.stars{color:var(--gold);letter-spacing:1px;}
+.rupee{color:var(--green);font-weight:700;}
+
+.nutri-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+.nutri-cell{text-align:center;padding:12px 6px;border-right:1px solid var(--border);}
+.nutri-cell:last-child,.nutri-cell:nth-child(3n){border-right:none;}
+.nutri-cell .num{font-family:'IBM Plex Mono';font-weight:600;font-size:14.5px;}
+.nutri-cell .lab{font-size:10.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+
+.card-body{padding:20px 22px 22px;flex:1;display:flex;flex-direction:column;gap:18px;}
+.section-mini h4{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin:0 0 10px;display:flex;align-items:center;gap:6px;}
+.ing-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;}
+.ing-list li{font-size:13.5px;display:flex;justify-content:space-between;gap:8px;}
+.ing-list.have li::before{content:"✓ ";color:var(--green);font-weight:700;}
+.ing-list.need li::before{content:"🛒 ";}
+.ing-list li .q{color:var(--ink-faint);font-size:12px;white-space:nowrap;}
+
+.steps{list-style:none;margin:0;padding:0;counter-reset:step;display:flex;flex-direction:column;gap:12px;}
+.steps li{counter-increment:step;padding-left:34px;position:relative;font-size:13.5px;line-height:1.55;}
+.steps li::before{content:counter(step);position:absolute;left:0;top:0;width:24px;height:24px;border-radius:50%;background:var(--gold);color:#241705;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;}
+.steps li .tip{display:block;color:var(--ink-soft);font-size:12px;margin-top:3px;font-style:italic;}
+
+.tip-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;font-size:12.5px;}
+.tip-grid div b{color:var(--ink-soft);font-weight:600;display:block;font-size:11px;text-transform:uppercase;letter-spacing:.04em;}
+
+.why-list,.leftover-list{margin:0;padding-left:18px;font-size:13px;line-height:1.6;}
+.sub-list{list-style:none;margin:0;padding:0;font-size:13px;}
+.sub-list li{padding:5px 0;border-bottom:1px dashed var(--border);}
+.sub-list li:last-child{border:none;}
+
+.pairings{display:flex;gap:10px;flex-wrap:wrap;}
+.pairing-chip{background:var(--surface-solid);border:1px solid var(--border);border-radius:12px;padding:8px 12px;font-size:12.5px;flex:1;min-width:120px;}
+.pairing-chip b{display:block;font-size:10.5px;text-transform:uppercase;color:var(--ink-faint);margin-bottom:2px;}
+
+.variations{display:flex;flex-direction:column;gap:8px;}
+.variations .vrow{font-size:12.5px;display:flex;gap:8px;}
+.variations .vrow b{min-width:88px;color:var(--gold-deep);}
+
+.card-actions{display:flex;gap:8px;flex-wrap:wrap;padding:16px 22px 22px;border-top:1px solid var(--border);}
+.assumptions{font-size:11.5px;color:var(--ink-faint);font-style:italic;padding:0 22px 14px;}
+
+/* Toast */
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:12px 20px;border-radius:100px;font-size:13.5px;opacity:0;pointer-events:none;transition:.3s;z-index:999;box-shadow:var(--shadow);}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* Modal */
+.modal-bg{position:fixed;inset:0;background:rgba(20,15,10,.55);display:none;align-items:center;justify-content:center;z-index:900;padding:20px;}
+.modal-bg.show{display:flex;}
+.modal{background:var(--surface-solid);border-radius:24px;max-width:520px;width:100%;max-height:82vh;overflow-y:auto;padding:28px;box-shadow:var(--shadow);}
+.modal h3{margin-top:0;}
+.modal-close{float:right;background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-faint);}
+.shop-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px;}
+.shop-item .prio{font-size:10.5px;padding:3px 8px;border-radius:100px;text-transform:uppercase;font-weight:700;}
+.prio.high{background:rgba(179,58,46,.18);color:var(--red);}
+.prio.med{background:rgba(217,164,65,.2);color:var(--gold-deep);}
+.prio.low{background:rgba(76,122,93,.18);color:var(--green);}
+
+.empty-state{text-align:center;padding:50px 20px;color:var(--ink-soft);}
+.error-box{background:rgba(179,58,46,.1);border:1px solid var(--red);color:var(--red);padding:16px 20px;border-radius:16px;font-size:13.5px;}
+
+footer{text-align:center;color:var(--ink-faint);font-size:12px;padding:30px 0 10px;}
+
+@media print{
+  .topbar,.panel:not(.print-visible),.card-actions,.find-bar,.mode-toggle,.results-head .btn,.modal-bg{display:none!important;}
+  body{background:#fff;color:#111;}
+  .recipes{display:block;}
+  .recipe-card{box-shadow:none;border:1px solid #ccc;margin-bottom:24px;page-break-inside:avoid;}
+}
+html{font-size:16px;}
+body{overscroll-behavior:none;padding-top:env(safe-area-inset-top,0);padding-bottom:env(safe-area-inset-bottom,0);padding-left:env(safe-area-inset-left,0);padding-right:env(safe-area-inset-right,0);}
+input,textarea,select{font-size:16px!important;}
+.status-dot{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;color:var(--ink-soft);cursor:pointer;padding:6px 10px;border:1px solid var(--border);border-radius:100px;background:var(--surface);}
+.status-dot .dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
+.dot.green{background:var(--green);}
+.dot.yellow{background:var(--gold);}
+.dot.red{background:var(--red);}
+.loading .model-name{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--ink-faint);margin-top:4px;}
+.history-dd{position:absolute;top:100%;left:0;right:0;background:var(--surface-solid);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);z-index:50;display:none;max-height:180px;overflow-y:auto;}
+.history-dd.show{display:block;}
+.history-dd div{padding:8px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--border);}
+.history-dd div:hover{background:var(--surface);}
+@media(max-width:480px){
+  .topbar{flex-direction:column;gap:10px;padding:14px 12px;}
+  .brand{width:100%;justify-content:center;}
+  .topbar .row-inline{width:100%;justify-content:center;}
+  .find-bar .btn{width:100%;justify-content:center;}
+  .panel{padding:18px;}
+  .hero h1{font-size:28px;}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark"><span>🍳</span></div>
+    <div>
+      <div class="brand-name">Dinner Ready</div>
+      <div class="brand-tag">AI Executive Chef</div>
+    </div>
+  </div>
+  <div class="row-inline">
+    <button class="btn btn-ghost btn-sm" id="favBtn">❤️ <span id="favCount">0</span> Favorites</button>
+    <span class="status-dot" id="statusDot" title="Provider health"><span class="dot green" id="statusDotColor"></span><span id="statusDotLabel">Ready</span></span>
+    <button class="mode-toggle" id="modeToggle">🌙 Dark Mode</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="hero">
+    <h1>Homemade Dinner<br>In A Jiffy.</h1>
+    <p>Tell me what you've got. I'll cook up three chef-grade recipes built around it - minimal shopping, maximum flavor.</p>
+  </div>
+
+  <!-- INPUT PANEL -->
+  <div class="panel">
+    <div class="eyebrow">Step 1</div>
+    <h3 class="panel-title">🥕 What do you have?</h3>
+    <p class="panel-sub">List your ingredients - I'll clean up duplicates and build around them.</p>
+
+    <label class="field-label">Ingredients (comma separated)</label>
+    <div style="position:relative;">
+      <textarea id="ingredientsInput" placeholder="Eggs, onion, tomato, rice, chicken, garlic, butter, milk"></textarea>
+      <div class="history-dd" id="historyDropdown"></div>
+    </div>
+    <div class="row-inline" style="margin-top:10px;">
+      <button class="btn btn-ghost btn-sm" id="detectBtn">🔍 Detect Ingredients from Text</button>
+      <button class="btn btn-ghost btn-sm" id="voiceBtn">🎙 Voice Input</button>
+      <datalist id="ingredientSuggestions"></datalist>
+    </div>
+    <div class="chips" id="ingredientChips"></div>
+
+    <div style="margin-top:20px;">
+      <label class="field-label">Quantities (optional) - one per line, e.g. "500g Chicken"</label>
+      <textarea id="quantitiesInput" placeholder="500g Chicken&#10;4 Eggs&#10;2 Tomatoes" style="min-height:70px;"></textarea>
+      <div class="hint">Leave blank and I'll estimate sensible quantities for you.</div>
+    </div>
+
+    <div style="margin-top:20px;">
+      <label class="field-label">Ingredients to avoid (allergies, dislikes)</label>
+      <input type="text" id="avoidInput" placeholder="Peanuts, mushroom, garlic">
+    </div>
+  </div>
+
+  <!-- PREFERENCES PANEL -->
+  <div class="panel">
+    <div class="eyebrow">Step 2</div>
+    <h3 class="panel-title">🍽 Shape the meal</h3>
+    <p class="panel-sub">The more you tell me, the better I can plate this for you.</p>
+
+    <div class="grid2">
+      <div>
+        <label class="field-label">Meal Type</label>
+        <select id="mealType">
+          <option>Breakfast</option><option>Brunch</option><option>Lunch</option><option>Evening Snacks</option>
+          <option selected>Dinner</option><option>Dessert</option><option>Drinks</option><option>Party Food</option>
+          <option>Kids Meal</option><option>Healthy Meal</option><option>Meal Prep</option><option>Late Night Snack</option>
+        </select>
+      </div>
+      <div>
+        <label class="field-label">Cooking Skill</label>
+        <select id="skillLevel">
+          <option>Beginner</option><option selected>Intermediate</option><option>Advanced</option><option>Professional</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="margin-top:20px;">
+      <label class="field-label">Cuisine Preference (select any, multiple allowed)</label>
+      <div class="pill-select" id="cuisinePills"></div>
+    </div>
+
+    <div style="margin-top:20px;">
+      <label class="field-label">Dietary Preference</label>
+      <div class="check-grid" id="dietaryGrid"></div>
+    </div>
+
+    <div class="grid2" style="margin-top:20px;">
+      <div>
+        <label class="field-label">Spice Level</label>
+        <input type="range" id="spiceLevel" min="0" max="3" value="1">
+        <div class="slider-labels"><span>Mild</span><span>Medium</span><span>Spicy</span><span>Very Spicy</span></div>
+        <div class="slider-val" id="spiceVal">Medium</div>
+      </div>
+      <div>
+        <label class="field-label">Cooking Time</label>
+        <input type="range" id="cookTimeSlider" min="0" max="4" value="2">
+        <div class="slider-labels"><span>15m</span><span>30m</span><span>45m</span><span>1h</span><span>Any</span></div>
+        <div class="slider-val" id="cookTimeVal">Under 45 min</div>
+      </div>
+    </div>
+
+    <div class="grid2" style="margin-top:20px;">
+      <div>
+        <label class="field-label">Health Goal</label>
+        <select id="healthGoal">
+          <option>Balanced</option><option>Weight Loss</option><option>Muscle Gain</option><option>High Protein</option>
+          <option>Low Fat</option><option>Low Sodium</option><option>Kids Nutrition</option><option>Energy Boost</option>
+        </select>
+      </div>
+      <div>
+        <label class="field-label">Number of People</label>
+        <input type="number" id="numPeople" min="1" max="20" value="2">
+      </div>
+    </div>
+
+    <div style="margin-top:20px;">
+      <label class="field-label">Equipment Available</label>
+      <div class="check-grid" id="equipmentGrid"></div>
+    </div>
+  </div>
+
+  <div class="find-bar">
+    <button class="btn btn-primary" id="findBtn" style="font-size:16px;padding:15px 30px;">🍳 Find Recipes</button>
+    <button class="btn btn-ghost" id="surpriseBtn" style="padding:15px 24px;">🎲 Surprise Me</button>
+    <button class="btn btn-ghost" id="shoppingBtn" style="padding:15px 24px;display:none;">🛒 Shopping List</button>
+    <button class="btn btn-ghost btn-sm" id="resetBtn" style="padding:8px 14px;font-size:12px;">🗑 Reset All</button>
+    <button class="btn btn-ghost btn-sm" id="clearCacheBtn" style="padding:8px 14px;font-size:12px;display:none;">🧹 Clear Cache</button>
+  </div>
+
+  <div class="loading" id="loadingBox">
+    <div class="pot"><div class="steam"></div><div class="steam"></div><div class="steam"></div><div class="lid"></div><div class="base"></div></div>
+    <p>The chef is thinking<span id="loadingDots">...</span></p>
+    <div class="sub" id="loadingSub">Tasting your ingredients and drafting the menu</div>
+    <div class="model-name" id="modelStatus"></div>
+  </div>
+
+  <div id="errorBox" style="display:none;" class="error-box"></div>
+
+  <div id="resultsWrap" style="display:none;">
+    <div class="results-head">
+      <h2>Your three recipes</h2>
+      <div class="row-inline">
+        <button class="btn btn-ghost btn-sm" id="regenBtn">🔄 Generate Again</button>
+        <button class="btn btn-ghost btn-sm" id="printBtn">🖨 Print</button>
+      </div>
+    </div>
+    <div class="recipes" id="recipesGrid"></div>
+  </div>
+
+  <footer>Fridge Chef - cooked up by AI, plated with care. Nutrition figures are estimates.</footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-bg" id="shopModalBg">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('shopModalBg')">✕</button>
+    <h3>🛒 Shopping List</h3>
+    <div id="shopModalBody"></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="favModalBg">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('favModalBg')">✕</button>
+    <h3>❤️ Saved Favorites</h3>
+    <div id="favModalBody"></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="statsModalBg">
+  <div class="modal" style="max-width:600px;">
+    <button class="modal-close" onclick="closeModal('statsModalBg')">✕</button>
+    <h3>📊 Provider Health</h3>
+    <div id="statsModalBody"></div>
+    <div class="row-inline" style="margin-top:14px;">
+      <button class="btn btn-ghost btn-sm" onclick="clearAllStats()">Reset Stats</button>
+    </div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<script>
+/* ---------------- Static data ---------------- */
+const CUISINES = ["North Indian","South Indian","Bengali","Gujarati","Marathi","Punjabi","Rajasthani","Kashmiri","Mughlai","Chinese","Indo-Chinese","Thai","Japanese","Korean","Italian","Mexican","Mediterranean","American","Continental","French","Middle Eastern","Vegan","Fusion","Surprise Me"];
+const DIETARY = ["Vegetarian","Vegan","Eggitarian","Non-Vegetarian","Jain","Gluten-Free","Dairy-Free","Low Carb","High Protein","Keto","Diabetic Friendly","Heart Healthy","Weight Loss","High Fiber"];
+const EQUIPMENT = ["Gas Stove","Induction","Oven","Air Fryer","Microwave","Pressure Cooker","Rice Cooker","Instant Pot","Mixer Grinder"];
+const COMMON_INGREDIENTS = ["Eggs","Onion","Tomato","Rice","Chicken","Garlic","Butter","Milk","Paneer","Potato","Ginger","Yogurt","Cheese","Spinach","Bell Pepper","Lentils","Cumin","Turmeric","Coriander","Chili","Flour","Oats","Banana","Lemon","Cream","Mushroom","Carrot","Cauliflower","Peas","Soy Sauce"];
+const SPICE_LABELS = ["Mild","Medium","Spicy","Very Spicy"];
+const TIME_LABELS = ["Under 15 min","Under 30 min","Under 45 min","Under 1 hour","No Limit"];
+
+const MODEL_FORMATS = {
+  gemini: {
+    buildRequest(prompt) {
+      return { contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: 3000, temperature: 0.8, responseMimeType: "application/json", thinkingConfig: { thinkingBudget: 0 } } };
+    },
+    getHeaders(apiKey) {
+      return { "Content-Type": "application/json", "x-goog-api-key": apiKey };
+    },
+    parseResponse(data) {
+      try { return data?.candidates?.[0]?.content?.parts?.map(p => p.text).join('') || ''; } catch(e) { return ''; }
+    }
+  },
+  openai: {
+    buildRequest(prompt, model) {
+      const body = { messages: [{ role: "user", content: prompt }], max_tokens: 3000, temperature: 0.8, response_format: { type: "json_object" } };
+      if (model.model) body.model = model.model;
+      return body;
+    },
+    getHeaders(apiKey) {
+      return { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` };
+    },
+    parseResponse(data) {
+      try { return data?.choices?.[0]?.message?.content || ''; } catch(e) { return ''; }
+    }
+  }
+};
+
+// ⚠ Replace revoked keys below before generating recipes
+const MODELS = [
+  // Gemini — REVOKED, replace both keys
+  { name: 'gemini-2.5-flash', format: 'gemini', endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', apiKey: 'yourapi', status: 'active', cooldownUntil: 0, callCount: 0 },
+  { name: 'gemini-2.5-flash-lite', format: 'gemini', endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite-preview-04-17:generateContent', apiKey: 'yourapi', status: 'active', cooldownUntil: 0, callCount: 0 },
+
+  // Groq — still working, keep as-is
+  { name: 'groq-llama-3.3-70b', format: 'openai', endpoint: 'https://api.groq.com/openai/v1/chat/completions', apiKey: 'yourapi', model: 'llama-3.3-70b-versatile', status: 'active', cooldownUntil: 0, callCount: 0 },
+  { name: 'groq-llama-4-scout', format: 'openai', endpoint: 'https://api.groq.com/openai/v1/chat/completions', apiKey: 'yourapi', model: 'llama-4-scout-17b-16e-instruct', status: 'active', cooldownUntil: 0, callCount: 0 },
+  { name: 'groq-llama-4-maverick', format: 'openai', endpoint: 'https://api.groq.com/openai/v1/chat/completions', apiKey: 'yourapi', model: 'llama-4-maverick-17b-128e-instruct', status: 'active', cooldownUntil: 0, callCount: 0 },
+  { name: 'groq-mixtral', format: 'openai', endpoint: 'https://api.groq.com/openai/v1/chat/completions', apiKey: 'yourapi', model: 'mixtral-8x7b-32768', status: 'active', cooldownUntil: 0, callCount: 0 },
+
+  // OpenRouter — exposed, replace key or top up credits
+  { name: 'or-gemini', format: 'openai', endpoint: 'https://openrouter.ai/api/v1/chat/completions', apiKey: 'yourapi', model: 'google/gemini-2.5-flash', status: 'active', cooldownUntil: 0, callCount: 0 },
+  { name: 'or-deepseek', format: 'openai', endpoint: 'https://openrouter.ai/api/v1/chat/completions', apiKey: 'yourapi', model: 'deepseek/deepseek-chat', status: 'active', cooldownUntil: 0, callCount: 0 },
+  { name: 'or-qwen-72b', format: 'openai', endpoint: 'https://openrouter.ai/api/v1/chat/completions', apiKey: 'yourapi', model: 'qwen/qwen-2.5-72b-instruct', status: 'active', cooldownUntil: 0, callCount: 0 },
+  { name: 'or-qwen-32b', format: 'openai', endpoint: 'https://openrouter.ai/api/v1/chat/completions', apiKey: 'yourapi', model: 'qwen/qwen-2.5-32b-instruct', status: 'active', cooldownUntil: 0, callCount: 0 },
+  { name: 'or-mistral', format: 'openai', endpoint: 'https://openrouter.ai/api/v1/chat/completions', apiKey: 'yourapi', model: 'mistralai/mistral-small-24b-instruct-2501', status: 'active', cooldownUntil: 0, callCount: 0 },
+  { name: 'or-llama', format: 'openai', endpoint: 'https://openrouter.ai/api/v1/chat/completions', apiKey: 'yourapi', model: 'meta-llama/llama-3.3-70b-instruct', status: 'active', cooldownUntil: 0, callCount: 0 },
+  { name: 'or-gemma', format: 'openai', endpoint: 'https://openrouter.ai/api/v1/chat/completions', apiKey: 'yourapi', model: 'google/gemma-2-27b-it', status: 'active', cooldownUntil: 0, callCount: 0 },
+  { name: 'or-kimi', format: 'openai', endpoint: 'https://openrouter.ai/api/v1/chat/completions', apiKey: 'yourapi', model: 'kimi/kimi-chat', status: 'active', cooldownUntil: 0, callCount: 0 },
+  { name: 'or-hermes', format: 'openai', endpoint: 'https://openrouter.ai/api/v1/chat/completions', apiKey: 'yourapi', model: 'nousresearch/hermes-3-llama-3.1-405b', status: 'active', cooldownUntil: 0, callCount: 0 },
+
+  // DeepSeek — exposed, replace key or top up
+  { name: 'deepseek-chat', format: 'openai', endpoint: 'https://api.deepseek.com/v1/chat/completions', apiKey: 'yourapi', model: 'deepseek-chat', status: 'active', cooldownUntil: 0, callCount: 0 },
+  { name: 'deepseek-reasoner', format: 'openai', endpoint: 'https://api.deepseek.com/v1/chat/completions', apiKey: 'yourapi', model: 'deepseek-reasoner', status: 'active', cooldownUntil: 0, callCount: 0 },
+
+  // Cerebras — replace if needed
+  { name: 'cerebras-llama', format: 'openai', endpoint: 'https://api.cerebras.ai/v1/chat/completions', apiKey: 'yourapi', model: 'cerebras/llama-3.3-70b', status: 'active', cooldownUntil: 0, callCount: 0 },
+  { name: 'cerebras-qwen', format: 'openai', endpoint: 'https://api.cerebras.ai/v1/chat/completions', apiKey: 'yourapi', model: 'cerebras/qwen-2.5-72b', status: 'active', cooldownUntil: 0, callCount: 0 },
+
+  // HuggingFace — replace if needed
+  { name: 'hf-qwen', format: 'openai', endpoint: 'https://api-inference.huggingface.co/models/Qwen/Qwen2.5-72B-Instruct/v1/chat/completions', apiKey: 'yourapi', status: 'active', cooldownUntil: 0, callCount: 0 },
+  { name: 'hf-llama', format: 'openai', endpoint: 'https://api-inference.huggingface.co/models/meta-llama/Llama-3.3-70B-Instruct/v1/chat/completions', apiKey: 'yourapi', status: 'active', cooldownUntil: 0, callCount: 0 },
+  { name: 'hf-gemma', format: 'openai', endpoint: 'https://api-inference.huggingface.co/models/google/gemma-2-27b-it/v1/chat/completions', apiKey: 'yourapi', status: 'active', cooldownUntil: 0, callCount: 0 },
+  { name: 'hf-mistral', format: 'openai', endpoint: 'https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.3/v1/chat/completions', apiKey: 'yourapi', status: 'active', cooldownUntil: 0, callCount: 0 },
+  { name: 'hf-deepseek', format: 'openai', endpoint: 'https://api-inference.huggingface.co/models/deepseek-ai/DeepSeek-R1-Distill-Qwen-32B/v1/chat/completions', apiKey: 'yourapi', status: 'active', cooldownUntil: 0, callCount: 0 },
+  { name: 'hf-phi', format: 'openai', endpoint: 'https://api-inference.huggingface.co/models/microsoft/Phi-3-mini-4k-instruct/v1/chat/completions', apiKey: 'yourapi', status: 'active', cooldownUntil: 0, callCount: 0 },
+];
+
+const COOLDOWN_MS = 900000;
+
+function providerName(model) {
+  if (model.name.startsWith('gemini')) return 'gemini';
+  if (model.name.startsWith('groq')) return 'groq';
+  if (model.name.startsWith('or-')) return 'openrouter';
+  if (model.name.startsWith('deepseek')) return 'deepseek';
+  if (model.name.startsWith('cerebras')) return 'cerebras';
+  if (model.name.startsWith('hf-')) return 'huggingface';
+  return 'unknown';
+}
+
+function loadProviderStats() {
+  try {
+    const raw = localStorage.getItem('fridgechef:stats');
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return {};
+}
+function saveProviderStats() {
+  try { localStorage.setItem('fridgechef:stats', JSON.stringify(providerStats)); } catch(e) {}
+}
+
+let providerStats = loadProviderStats();
+
+function recordResult(modelName, success, latencyMs) {
+  const prov = modelName.startsWith('gemini') ? 'gemini' :
+               modelName.startsWith('groq') ? 'groq' :
+               modelName.startsWith('or-') ? 'openrouter' :
+               modelName.startsWith('deepseek') ? 'deepseek' :
+               modelName.startsWith('cerebras') ? 'cerebras' :
+               modelName.startsWith('hf-') ? 'huggingface' : 'unknown';
+  if (!providerStats[prov]) providerStats[prov] = { r: 0, ok: 0, fail: 0, lat: 0 };
+  providerStats[prov].r++;
+  if (success) { providerStats[prov].ok++; providerStats[prov].lat += latencyMs; }
+  else providerStats[prov].fail++;
+  if (providerStats[prov].r % 5 === 0) saveProviderStats();
+}
+
+function getActiveModel() {
+  const now = Date.now();
+  const active = MODELS.filter(m => m.status === 'active' || m.cooldownUntil <= now);
+
+  if (active.length === 0) {
+    const oldest = MODELS.reduce((a, b) => a.cooldownUntil < b.cooldownUntil ? a : b);
+    oldest.status = 'active';
+    oldest.cooldownUntil = 0;
+    return oldest;
+  }
+
+  active.sort((a, b) => {
+    const c = a.callCount - b.callCount;
+    if (c !== 0) return c;
+    const sa = providerStats[providerName(a)], sb = providerStats[providerName(b)];
+    const scA = sa && sa.r >= 3 ? sa.ok / sa.r : 1;
+    const scB = sb && sb.r >= 3 ? sb.ok / sb.r : 1;
+    return scB - scA;
+  });
+  return active[0];
+}
+
+async function callModel(prompt, statusCallback) {
+  if (!navigator.onLine) return 'offline';
+
+  for (let attempts = 0; attempts < MODELS.length; attempts++) {
+    const now = Date.now();
+    if (MODELS.every(m => m.status === 'cooldown' && m.cooldownUntil > now)) {
+      const oldest = MODELS.reduce((a, b) => a.cooldownUntil < b.cooldownUntil ? a : b);
+      oldest.status = 'active';
+      oldest.cooldownUntil = 0;
+    }
+
+    const model = getActiveModel();
+    const fmt = MODEL_FORMATS[model.format];
+    if (!fmt) { model.status = 'cooldown'; model.cooldownUntil = Date.now() + 600000; continue; }
+    if (statusCallback) statusCallback(model.name);
+
+    const startTime = performance.now();
+    for (let retry = 0; retry < 2; retry++) {
+      if (retry === 1) await new Promise(r => setTimeout(r, 1000));
+
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 30000);
+        const response = await fetch(model.endpoint, {
+          method: 'POST',
+          headers: fmt.getHeaders(model.apiKey),
+          body: JSON.stringify(fmt.buildRequest(prompt, model)),
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+        model.callCount++;
+
+        const status = response.status;
+        if (status === 429 || status >= 500) {
+          model.status = 'cooldown';
+          model.cooldownUntil = Date.now() + COOLDOWN_MS;
+          break;
+        }
+        if (!response.ok && retry === 0) continue;
+        if (!response.ok) break;
+
+        const data = await response.json();
+        const text = fmt.parseResponse(data);
+        if (!text && retry === 0) continue;
+        if (!text) break;
+
+        const clean = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+        const firstBrace = clean.indexOf('{');
+        const lastBrace = clean.lastIndexOf('}');
+        if (firstBrace === -1 || lastBrace === -1) {
+          if (retry === 0) continue;
+          break;
+        }
+
+        const result = JSON.parse(clean.slice(firstBrace, lastBrace + 1));
+        recordResult(model.name, true, performance.now() - startTime);
+        return result;
+      } catch (error) {
+        console.error(`Model ${model.name} (attempt ${retry + 1}) failed:`, error?.message || error);
+        if (retry === 0) continue;
+      }
+    }
+    recordResult(model.name, false, 0);
+  }
+
+  // Last resort: clear all cooldowns and try the first model once more
+  MODELS.forEach(m => { m.status = 'active'; m.cooldownUntil = 0; });
+  const lastModel = MODELS[0];
+  const lastFmt = MODEL_FORMATS[lastModel.format];
+  if (lastFmt) {
+    try {
+      const c = new AbortController();
+      const t = setTimeout(() => c.abort(), 35000);
+      const r = await fetch(lastModel.endpoint, { method: 'POST', headers: lastFmt.getHeaders(lastModel.apiKey), body: JSON.stringify(lastFmt.buildRequest(prompt, lastModel)), signal: c.signal });
+      clearTimeout(t);
+      if (r.ok) {
+        const d = await r.json();
+        const txt = lastFmt.parseResponse(d);
+        if (txt) {
+          const cl = txt.replace(/```json/gi,'').replace(/```/g,'').trim();
+          const fb = cl.indexOf('{'), lb = cl.lastIndexOf('}');
+          if (fb !== -1 && lb !== -1) return JSON.parse(cl.slice(fb, lb + 1));
+        }
+      }
+    } catch(e) {}
+  }
+
+  return null;
+}
+
+let ingredientList = [];
+let selectedCuisines = new Set(["Surprise Me"]);
+let currentRecipes = [];
+let favorites = [];
+
+loadFavorites();
+
+
+/* ---------------- Init UI ---------------- */
+function buildPills(){
+  const wrap = document.getElementById('cuisinePills');
+  CUISINES.forEach(c=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (selectedCuisines.has(c)?' active':'');
+    p.textContent = c;
+    p.onclick = ()=>{
+      if(selectedCuisines.has(c)) selectedCuisines.delete(c); else selectedCuisines.add(c);
+      p.classList.toggle('active');
+    };
+    wrap.appendChild(p);
+  });
+}
+function buildChecks(containerId, items, defaults=[]){
+  const wrap = document.getElementById(containerId);
+  items.forEach(i=>{
+    const label = document.createElement('label');
+    label.className='check-item';
+    label.innerHTML = `<input type="checkbox" value="${i}" ${defaults.includes(i)?'checked':''}> ${i}`;
+    wrap.appendChild(label);
+  });
+}
+buildPills();
+buildChecks('dietaryGrid', DIETARY);
+buildChecks('equipmentGrid', EQUIPMENT, ["Gas Stove","Pressure Cooker","Mixer Grinder"]);
+
+const dl = document.getElementById('ingredientSuggestions');
+COMMON_INGREDIENTS.forEach(i=>{const o=document.createElement('option');o.value=i;dl.appendChild(o);});
+
+document.getElementById('spiceLevel').addEventListener('input', e=>{
+  document.getElementById('spiceVal').textContent = SPICE_LABELS[e.target.value];
+});
+document.getElementById('cookTimeSlider').addEventListener('input', e=>{
+  document.getElementById('cookTimeVal').textContent = TIME_LABELS[e.target.value];
+});
+
+/* ---------------- Ingredient chips ---------------- */
+function renderChips(){
+  const wrap = document.getElementById('ingredientChips');
+  wrap.innerHTML='';
+  ingredientList.forEach((ing,idx)=>{
+    const chip=document.createElement('div');
+    chip.className='chip';
+    chip.innerHTML = `${ing} <button onclick="removeIngredient(${idx})">✕</button>`;
+    wrap.appendChild(chip);
+  });
+}
+function removeIngredient(idx){ ingredientList.splice(idx,1); renderChips(); }
+document.getElementById('detectBtn').addEventListener('click', ()=>{
+  const raw = document.getElementById('ingredientsInput').value;
+  const parts = raw.split(',').map(s=>s.trim()).filter(Boolean);
+  const clean = [...new Set(parts.map(p=>p.replace(/\s+/g,' ')))];
+  ingredientList = clean;
+  renderChips();
+  showToast(`Detected ${clean.length} ingredient${clean.length!==1?'s':''}`);
+});
+
+/* Voice input - works on Android Chrome / HTTPS; may not work in APK WebView without RECORD_AUDIO permission */
+document.getElementById('voiceBtn').addEventListener('click', ()=>{
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ showToast('Voice requires HTTPS or app microphone permission'); return; }
+  try {
+    const rec = new SR(); rec.lang='en-US'; rec.interimResults=false;
+    showToast('Listening...');
+    rec.onresult = (e)=>{
+      const text = e.results[0][0].transcript;
+      const ta = document.getElementById('ingredientsInput');
+      ta.value = ta.value ? ta.value + ', ' + text : text;
+      showToast('Heard: ' + text);
+    };
+    rec.onerror = ()=> showToast('Voice not available - try typing');
+    rec.start();
+  } catch(e) { showToast('Voice not available on this device'); }
+});
+
+/* ---------------- Toast ---------------- */
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.classList.remove('show'), 2600);
+}
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+
+/* ---------------- Collect form data ---------------- */
+function getChecked(containerId){
+  return Array.from(document.querySelectorAll(`#${containerId} input:checked`)).map(i=>i.value);
+}
+function collectFormData(){
+  if(ingredientList.length===0){
+    const raw = document.getElementById('ingredientsInput').value;
+    ingredientList = raw.split(',').map(s=>s.trim()).filter(Boolean);
+  }
+  return {
+    ingredients: ingredientList,
+    quantities: document.getElementById('quantitiesInput').value.trim(),
+    avoid: document.getElementById('avoidInput').value.trim(),
+    mealType: document.getElementById('mealType').value,
+    cuisines: Array.from(selectedCuisines),
+    dietary: getChecked('dietaryGrid'),
+    spice: SPICE_LABELS[document.getElementById('spiceLevel').value],
+    skill: document.getElementById('skillLevel').value,
+    cookTime: TIME_LABELS[document.getElementById('cookTimeSlider').value],
+    equipment: getChecked('equipmentGrid'),
+    people: document.getElementById('numPeople').value,
+    healthGoal: document.getElementById('healthGoal').value
+  };
+}
+
+/* ---------------- Prompt building ---------------- */
+const SCHEMA_INSTRUCTIONS = `Return ONLY compact minified JSON (no markdown fences, no preamble/epilogue) containing exactly three recipe objects keyed "chef", "healthy", "creative". Each recipe matches this shape. Keep strings SHORT (most under 12 words). steps: 5-7 items max per recipe.
+{"chef":{
+"name":"","cuisine":"","difficulty":"Beginner|Intermediate|Advanced|Professional","cookTime":"","prepTime":"","servings":0,"calories":0,"protein":0,"carbs":0,"fat":0,"fiber":0,"sugar":0,"glycemicLoad":"Low|Medium|High","nutritionScore":0,"healthRating":0,"budgetRating":1,"matchPercent":0,
+"have":[{"n":"","q":""}],"need":[{"n":"","q":"","priority":"High|Medium|Low","cost":""}],
+"steps":[{"t":"","d":"","tip":""}],
+"chef":{"secret":"","oil":"","pan":"","garnish":"","plating":"","flavor":"","premium":""},
+"why":["",""],"subs":[{"from":"","to":""}],
+"nutrition":{"vitamins":"","minerals":"","suitableFor":["Weight Loss","Diabetes","Heart Health","Children","Gym Diet"]},
+"leftovers":["",""],"beverage":"","side":"","dessert":"",
+"variations":{"spicy":"","healthy":"","restaurant":"","budget":"","kids":""},
+"assumptions":["only if quantities were estimated"]},
+"healthy":{...same shape...},"creative":{...same shape...}}`;
+
+function buildPrompt(f){
+  return `You are a Michelin-star executive chef, certified nutritionist, and Indian home cooking expert. A home cook has the following ingredients and preferences. Design THREE recipes that maximize use of available ingredients, minimize waste and extra shopping, estimate nutrition realistically (not guessed wildly), and include detailed technique, substitutions, and plating.
+
+${f.cuisines.includes('Surprise Me') ? 'Choose any cuisine that fits the ingredients.' : ''}
+
+CHEF'S RECOMMENDATION: the single best, most satisfying, most authentic recipe. Prioritize taste, technique, and ingredient match.
+HEALTHY CHOICE: optimize for the stated health goal and dietary preferences. Favor lower calories/fat where sensible, higher nutrition score.
+CREATIVE: an inventive, less obvious dish using the same ingredients. Still realistic and cookable, not gimmicky.
+
+Ingredients on hand: ${f.ingredients.join(', ') || 'none specified'}
+Quantities (if given): ${f.quantities || 'not specified - estimate sensibly and note it in "assumptions"'}
+Ingredients to avoid/allergic to: ${f.avoid || 'none'}
+Meal type: ${f.mealType}
+Cuisine preference(s): ${f.cuisines.join(', ')}
+Dietary preference(s): ${f.dietary.join(', ') || 'none specified'}
+Spice level: ${f.spice}
+Cooking skill: ${f.skill}
+Max cooking time: ${f.cookTime}
+Equipment available (use ONLY these): ${f.equipment.join(', ') || 'basic stovetop'}
+Servings needed: ${f.people}
+Health goal: ${f.healthGoal}
+
+Rules: maximize use of ingredients on hand, minimize extra shopping, never suggest impossible/hallucinated techniques, keep it authentic to the chosen cuisine, respect the equipment list strictly, respect all dietary restrictions and avoided ingredients strictly, scale quantities to the servings requested.
+
+${SCHEMA_INSTRUCTIONS}`;
+}
+
+/* ---------------- Cache ---------------- */
+const CACHE_KEY = 'fridgechef:cache';
+const MAX_CACHE = 50;
+const CACHE_TTL = 7 * 86400000;
+
+function cacheKey(f) {
+  const norm = { ...f };
+  ['ingredients','cuisines','dietary','equipment'].forEach(k => { if (Array.isArray(norm[k])) norm[k] = [...norm[k]].sort(); });
+  return JSON.stringify(norm);
+}
+
+function cacheGet(key) {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const store = JSON.parse(raw);
+    const entry = store[key];
+    if (!entry || Date.now() - entry.t > CACHE_TTL) return null;
+    return entry.d;
+  } catch(e) { return null; }
+}
+
+function cacheSet(key, data) {
+  try {
+    let store = JSON.parse(localStorage.getItem(CACHE_KEY) || '{}');
+    const keys = Object.keys(store);
+    if (keys.length >= MAX_CACHE) {
+      let oldest = keys[0];
+      for (const k of keys) { if (store[k].t < store[oldest].t) oldest = k; }
+      delete store[oldest];
+    }
+    store[key] = { t: Date.now(), d: data };
+    localStorage.setItem(CACHE_KEY, JSON.stringify(store));
+  } catch(e) {}
+}
+
+/* ---------------- Generate flow ---------------- */
+const LOADING_LINES = [
+  "Tasting your ingredients and drafting the menu",
+  "Balancing flavors and nutrition",
+  "Plating the final three recipes"
+];
+function setLoading(show, lineIdx){
+  document.getElementById('loadingBox').classList.toggle('show', show);
+  document.getElementById('findBtn').disabled = show;
+  document.getElementById('surpriseBtn').disabled = show;
+  if(show) document.getElementById('loadingSub').textContent = LOADING_LINES[lineIdx % LOADING_LINES.length];
+}
+
+async function findRecipes(force) {
+  const f = collectFormData();
+  if (f.ingredients.length === 0) { showToast('Add at least one ingredient first'); return; }
+
+  const ck = cacheKey(f);
+  if (!force) {
+    const cached = cacheGet(ck);
+    if (cached) {
+      currentRecipes = cached;
+      renderRecipes(cached);
+      document.getElementById('shoppingBtn').style.display = 'inline-flex';
+      showToast('Loaded from cache ⚡');
+      return;
+    }
+  }
+
+  document.getElementById('errorBox').style.display = 'none';
+  document.getElementById('resultsWrap').style.display = 'none';
+  setLoading(true, 0);
+
+  try {
+    const data = await callModel(buildPrompt(f), name => {
+      document.getElementById('modelStatus').textContent = `⚙ ${name}`;
+    });
+    if (data === 'offline') {
+      document.getElementById('errorBox').style.display = 'block';
+      document.getElementById('errorBox').textContent = '📡 No internet connection. Please check your network and try again.';
+      return;
+    }
+
+    const results = [];
+
+    if (data && data.chef) {
+      ['chef', 'healthy', 'creative'].forEach(tier => {
+        if (data[tier]) { data[tier]._tier = tier; results.push(data[tier]); }
+      });
+    }
+
+    // Fallback: fetch any missing tiers individually
+    const allTiers = ['chef', 'healthy', 'creative'];
+    const have = new Set(results.map(r => r._tier));
+    for (const tier of allTiers) {
+      if (have.has(tier)) continue;
+      const prompt = `Generate ONE ${tier} recipe only. ${f.ingredients.join(', ')}`;
+      const r = await callModel(prompt, name => {
+        document.getElementById('modelStatus').textContent = `⚙ ${name} (${tier} fallback)`;
+      });
+      if (r && typeof r === 'object' && !r.offline) {
+        r._tier = tier;
+        results.push(r);
+      }
+    }
+
+    if (results.length === 0) {
+      document.getElementById('errorBox').style.display = 'block';
+      document.getElementById('errorBox').textContent = 'All AI providers are currently unavailable. Wait about 30–60 seconds, then try again. ⏳';
+      return;
+    }
+
+    currentRecipes = results;
+    cacheSet(ck, results);
+    renderRecipes(results);
+    document.getElementById('shoppingBtn').style.display = 'inline-flex';
+  } catch (error) {
+    document.getElementById('errorBox').style.display = 'block';
+    document.getElementById('errorBox').textContent = error.message || 'The chef dropped a pan - couldn\'t generate recipes right now. Please try again in a moment.';
+    console.error(error);
+  } finally {
+    setLoading(false);
+  }
+}
+
+async function surpriseMe(){
+  const f = collectFormData();
+  if(f.ingredients.length===0){ showToast('Add at least one ingredient first'); return; }
+
+  const ck = cacheKey(f);
+  const cached = cacheGet(ck);
+  if (cached) {
+    currentRecipes = cached;
+    renderRecipes(cached);
+    showToast('Loaded from cache ⚡');
+    return;
+  }
+
+  document.getElementById('errorBox').style.display='none';
+  setLoading(true, 2);
+  try{
+    const data = await callModel(buildPrompt(f), name => {
+      document.getElementById('modelStatus').textContent = `⚙ ${name}`;
+    });
+    if (data === 'offline') {
+      document.getElementById('errorBox').style.display = 'block';
+      document.getElementById('errorBox').textContent = '📡 No internet connection. Please check your network and try again.';
+      return;
+    }
+    if (!data || !data.chef) {
+      document.getElementById('errorBox').style.display = 'block';
+      document.getElementById('errorBox').textContent = 'All AI providers are currently unavailable. Wait about 30–60 seconds, then try again. ⏳';
+      return;
+    }
+    const r = data.creative || data.chef;
+    r._tier = 'creative';
+    currentRecipes = [r];
+    cacheSet(ck, [r]);
+    renderRecipes([r]);
+    document.getElementById('shoppingBtn').style.display='inline-flex';
+  }catch(err){
+    document.getElementById('errorBox').style.display='block';
+    document.getElementById('errorBox').textContent = err.message || "Couldn't cook up a surprise right now - try again.";
+    console.error(err);
+  }finally{
+    setLoading(false);
+  }
+}
+
+document.getElementById('findBtn').addEventListener('click', ()=> findRecipes(false));
+document.getElementById('surpriseBtn').addEventListener('click', surpriseMe);
+document.getElementById('regenBtn').addEventListener('click', ()=> findRecipes(true));
+document.getElementById('printBtn').addEventListener('click', ()=>window.print());
+
+/* ---------------- Render recipes ---------------- */
+const TIER_META = {
+  chef:{label:"🥇 Chef's Recommendation", cls:"chef"},
+  healthy:{label:"🥈 Best Healthy Choice", cls:"healthy"},
+  creative:{label:"🥉 Most Creative Recipe", cls:"creative"}
+};
+
+function gaugeSVG(pct){
+  const r=26, c=2*Math.PI*r, off=c-(c*pct/100);
+  return `<svg width="64" height="64" viewBox="0 0 64 64">
+    <circle cx="32" cy="32" r="${r}" fill="none" stroke="var(--border)" stroke-width="7"/>
+    <circle cx="32" cy="32" r="${r}" fill="none" stroke="var(--gold)" stroke-width="7" stroke-linecap="round"
+      stroke-dasharray="${c}" stroke-dashoffset="${off}"/>
+  </svg>`;
+}
+function stars(n){ n=Math.max(0,Math.min(5,Math.round(n))); return '★'.repeat(n)+'☆'.repeat(5-n); }
+function rupees(n){ n=Math.max(1,Math.min(3,Math.round(n))); return '₹'.repeat(n); }
+
+function recipeCardHTML(r, idx){
+  const meta = TIER_META[r._tier] || TIER_META.creative;
+  const have = (r.have||[]).map(i=>`<li>${i.n}<span class="q">${i.q||''}</span></li>`).join('');
+  const need = (r.need||[]).map(i=>`<li>${i.n}<span class="q">${i.q||''} · ${i.priority||''}</span></li>`).join('') || '<li style="opacity:.6">Nothing extra needed!</li>';
+  const steps = (r.steps||[]).map(s=>`<li><b>${s.t||''}</b>: ${s.d||''}${s.tip?`<span class="tip">💡 ${s.tip}</span>`:''}</li>`).join('');
+  const why = (r.why||[]).map(w=>`<li>${w}</li>`).join('');
+  const subs = (r.subs||[]).map(s=>`<li>${s.from} → <b>${s.to}</b></li>`).join('') || '<li style="opacity:.6">No substitutions needed</li>';
+  const leftovers = (r.leftovers||[]).map(l=>`<li>${l}</li>`).join('');
+  const suitable = (r.nutrition && r.nutrition.suitableFor || []).join(', ');
+  const chef = r.chef || {};
+  const v = r.variations || {};
+  const assumptions = (r.assumptions||[]).length ? `<div class="assumptions">📝 Assumption: ${r.assumptions.join('; ')}</div>` : '';
+
+  return `
+  <div class="recipe-card" data-idx="${idx}">
+    <div class="recipe-head">
+      <div class="badge ${meta.cls}">${meta.label}</div>
+      <h3 class="recipe-name">${r.name||'Untitled dish'}</h3>
+      <div class="recipe-meta">
+        <span>${r.cuisine||''}</span><span>${r.difficulty||''}</span><span>⏱ ${r.cookTime||''}</span>
+        <span>Prep ${r.prepTime||''}</span><span>🍽 ${r.servings||''} servings</span>
+      </div>
+    </div>
+    <div class="gauge-row">
+      <div class="gauge">${gaugeSVG(r.matchPercent||0)}<div class="pct">${r.matchPercent||0}%</div></div>
+      <div class="gauge-label">Ingredient match<b>${(r.matchPercent||0)}% ingredients available</b></div>
+    </div>
+    <div class="nutri-grid">
+      <div class="nutri-cell"><div class="num">${r.calories||0}</div><div class="lab">kcal</div></div>
+      <div class="nutri-cell"><div class="num">${r.protein||0}g</div><div class="lab">Protein</div></div>
+      <div class="nutri-cell"><div class="num">${r.carbs||0}g</div><div class="lab">Carbs</div></div>
+      <div class="nutri-cell"><div class="num">${r.fat||0}g</div><div class="lab">Fat</div></div>
+      <div class="nutri-cell"><div class="num">${r.fiber||0}g</div><div class="lab">Fiber</div></div>
+      <div class="nutri-cell"><div class="num">${r.sugar||0}g</div><div class="lab">Sugar</div></div>
+    </div>
+    <div class="card-body">
+      <div class="row-inline" style="justify-content:space-between;font-size:12.5px;">
+        <span>Health <span class="stars">${stars(r.healthRating||0)}</span></span>
+        <span>Budget <span class="rupee">${rupees(r.budgetRating||1)}</span></span>
+        <span>Nutrition score <b>${r.nutritionScore||0}/100</b></span>
+      </div>
+
+      <div class="section-mini"><h4>✅ You already have</h4><ul class="ing-list have">${have||'<li style="opacity:.6">-</li>'}</ul></div>
+      <div class="section-mini"><h4>🛒 Extra needed</h4><ul class="ing-list need">${need}</ul></div>
+      <div class="section-mini"><h4>👨‍🍳 Method</h4><ol class="steps">${steps}</ol></div>
+
+      <div class="section-mini"><h4>🎩 Pro Chef Tips</h4>
+        <div class="tip-grid">
+          <div><b>Chef's Secret</b>${chef.secret||''}</div>
+          <div><b>Best Oil</b>${chef.oil||''}</div>
+          <div><b>Best Pan</b>${chef.pan||''}</div>
+          <div><b>Garnish</b>${chef.garnish||''}</div>
+          <div><b>Plating</b>${chef.plating||''}</div>
+          <div><b>Flavor Boost</b>${chef.flavor||''}</div>
+        </div>
+      </div>
+
+      <div class="section-mini"><h4>🧠 Why this recipe</h4><ul class="why-list">${why}</ul></div>
+      <div class="section-mini"><h4>🔁 Substitutions</h4><ul class="sub-list">${subs}</ul></div>
+
+      <div class="section-mini"><h4>🥗 Nutrition Notes</h4>
+        <div style="font-size:12.5px;line-height:1.6;">
+          <div><b>Vitamins:</b> ${r.nutrition?.vitamins||'-'}</div>
+          <div><b>Minerals:</b> ${r.nutrition?.minerals||'-'}</div>
+          <div><b>Suitable for:</b> ${suitable||'-'}</div>
+          <div><b>Glycemic load:</b> ${r.glycemicLoad||'-'}</div>
+        </div>
+      </div>
+
+      <div class="section-mini"><h4>♻️ Leftover Ideas</h4><ul class="leftover-list">${leftovers}</ul></div>
+
+      <div class="section-mini"><h4>🍷 Pairings</h4>
+        <div class="pairings">
+          <div class="pairing-chip"><b>Beverage</b>${r.beverage||'-'}</div>
+          <div class="pairing-chip"><b>Side</b>${r.side||'-'}</div>
+          <div class="pairing-chip"><b>Dessert</b>${r.dessert||'-'}</div>
+        </div>
+      </div>
+
+      <div class="section-mini"><h4>🎭 Variations</h4>
+        <div class="variations">
+          <div class="vrow"><b>Spicy</b>${v.spicy||'-'}</div>
+          <div class="vrow"><b>Healthy</b>${v.healthy||'-'}</div>
+          <div class="vrow"><b>Restaurant</b>${v.restaurant||'-'}</div>
+          <div class="vrow"><b>Budget</b>${v.budget||'-'}</div>
+          <div class="vrow"><b>Kids</b>${v.kids||'-'}</div>
+        </div>
+      </div>
+    </div>
+    ${assumptions}
+    <div class="card-actions">
+      <button class="btn btn-ghost btn-sm" onclick="saveFavorite(${idx})">❤️ Save</button>
+      <button class="btn btn-ghost btn-sm" onclick="copyRecipe(${idx})">📋 Copy</button>
+      <button class="btn btn-ghost btn-sm" onclick="shareRecipe(${idx})">📤 Share</button>
+    </div>
+  </div>`;
+}
+
+function renderRecipes(recipes){
+  document.getElementById('resultsWrap').style.display='block';
+  document.querySelector('#resultsWrap h2').textContent = `Your ${recipes.length} recipe${recipes.length !== 1 ? 's' : ''}`;
+  document.getElementById('recipesGrid').innerHTML = recipes.map((r,i)=>recipeCardHTML(r,i)).join('');
+  document.getElementById('resultsWrap').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+/* ---------------- Recipe text (for copy/share/print) ---------------- */
+function recipeToText(r){
+  const have=(r.have||[]).map(i=>`  - ${i.n} ${i.q||''}`).join('\n');
+  const need=(r.need||[]).map(i=>`  - ${i.n} ${i.q||''} (${i.priority||''})`).join('\n');
+  const steps=(r.steps||[]).map((s,i)=>`  ${i+1}. ${s.t}: ${s.d}${s.tip?` (Tip: ${s.tip})`:''}`).join('\n');
+  return `${r.name} - ${r.cuisine}\n${r.difficulty} · ${r.cookTime} · Serves ${r.servings}\n\nHAVE:\n${have}\n\nNEED:\n${need}\n\nMETHOD:\n${steps}\n\nChef's secret: ${r.chef?.secret||''}\nBeverage pairing: ${r.beverage||''}  |  Side: ${r.side||''}  |  Dessert: ${r.dessert||''}`;
+}
+function copyRecipe(idx){
+  navigator.clipboard.writeText(recipeToText(currentRecipes[idx])).then(()=>showToast('Recipe copied to clipboard'));
+}
+function shareRecipe(idx){
+  const text = recipeToText(currentRecipes[idx]);
+  if(navigator.share){ navigator.share({title: currentRecipes[idx].name, text}).catch(()=>{}); }
+  else { navigator.clipboard.writeText(text); showToast('Share not supported - copied instead'); }
+}
+
+function updateFavCount(){
+  const el = document.getElementById('favCount');
+  if (el) el.textContent = favorites.length;
+}
+
+/* ---------------- Favorites (localStorage - this is a standalone file, not a live Artifact) ---------------- */
+function loadFavorites(){
+  try{
+    const raw = localStorage.getItem('fridgechef:favorites');
+    favorites = raw ? JSON.parse(raw) : [];
+  }catch(e){ favorites = []; }
+  updateFavCount();
+}
+function saveFavorite(idx){
+  const r = currentRecipes[idx];
+  favorites.push(r);
+  try{
+    localStorage.setItem('fridgechef:favorites', JSON.stringify(favorites));
+    showToast('Saved to favorites ❤️');
+  }catch(e){ showToast('Could not save favorite'); }
+}
+function renderFavorites(){
+  const body = document.getElementById('favModalBody');
+  body.innerHTML = '';
+  if(favorites.length===0){ body.innerHTML = '<div class="empty-state">No favorites saved yet. Save a recipe to see it here.</div>'; return; }
+  favorites.forEach((r,i)=>{
+    const row = document.createElement('div');
+    row.style.cssText = 'padding:12px 0;border-bottom:1px solid var(--border);';
+    row.innerHTML = `<b>${r.name}</b> <span style="color:var(--ink-soft);font-size:12px;">- ${r.cuisine}</span>
+      <div class="row-inline" style="margin-top:6px;">
+        <button class="btn btn-ghost btn-sm view-fav">👁 View</button>
+        <button class="btn btn-ghost btn-sm copy-fav">📋 Copy</button>
+        <button class="btn btn-ghost btn-sm remove-fav">✕ Remove</button>
+      </div>`;
+    row.querySelector('.view-fav').addEventListener('click', ()=>{
+      closeModal('favModalBg');
+      currentRecipes = [r];
+      renderRecipes([r]);
+      document.getElementById('shoppingBtn').style.display = 'inline-flex';
+    });
+    row.querySelector('.copy-fav').addEventListener('click', ()=>{
+      navigator.clipboard.writeText(recipeToText(r));
+      showToast('Copied');
+    });
+    row.querySelector('.remove-fav').addEventListener('click', ()=>removeFavorite(i));
+    body.appendChild(row);
+  });
+}
+function removeFavorite(i){
+  favorites.splice(i,1);
+  localStorage.setItem('fridgechef:favorites', JSON.stringify(favorites));
+  updateFavCount();
+  renderFavorites();
+}
+document.getElementById('favBtn').addEventListener('click', ()=>{
+  loadFavorites();
+  renderFavorites();
+  document.getElementById('favModalBg').classList.add('show');
+});
+
+/* ---------------- Shopping list ---------------- */
+document.getElementById('shoppingBtn').addEventListener('click', ()=>{
+  const map = {};
+  currentRecipes.forEach(r=>(r.need||[]).forEach(i=>{
+    const key = i.n.toLowerCase();
+    if(!map[key]) map[key] = {n:i.n, q:i.q, priority:i.priority||'Medium', cost:i.cost||''};
+  }));
+  const items = Object.values(map);
+  const body = document.getElementById('shopModalBody');
+  if(items.length===0){ body.innerHTML = '<div class="empty-state">Nothing extra needed - you have it all! 🎉</div>'; }
+  else{
+    body.innerHTML = items.map(i=>{
+      const p = (i.priority||'medium').toLowerCase().includes('high')?'high':(i.priority||'').toLowerCase().includes('low')?'low':'med';
+      return `<div class="shop-item"><span>${i.n} <span style="color:var(--ink-faint);font-size:12px;">${i.q||''}</span></span><span class="prio ${p}">${i.priority||'Medium'}</span></div>`;
+    }).join('');
+  }
+  document.getElementById('shopModalBg').classList.add('show');
+});
+
+/* click outside modal to close */
+document.querySelectorAll('.modal-bg').forEach(m=>{
+  m.addEventListener('click', e=>{ if(e.target===m) m.classList.remove('show'); });
+});
+
+/* ---------------- Dark mode persistence ---------------- */
+function applyMode(dark){
+  document.body.classList.toggle('dark', dark);
+  document.getElementById('modeToggle').textContent = dark ? '☀️ Light Mode' : '🌙 Dark Mode';
+  try { localStorage.setItem('fridgechef:dark', dark ? '1' : '0'); } catch(e) {}
+}
+document.getElementById('modeToggle').addEventListener('click', ()=>{
+  applyMode(!document.body.classList.contains('dark'));
+});
+(function(){
+  let dark;
+  try { const s = localStorage.getItem('fridgechef:dark'); if (s !== null) dark = s === '1'; } catch(e) {}
+  if (dark === undefined) dark = true;
+  applyMode(dark);
+})();
+
+/* ---------------- Input history ---------------- */
+const HIST_KEY = 'fridgechef:hist';
+
+function loadHistory(){
+  try { return JSON.parse(localStorage.getItem(HIST_KEY) || '[]'); } catch(e) { return []; }
+}
+function saveHistory(h){
+  try { localStorage.setItem(HIST_KEY, JSON.stringify(h.slice(0,5))); } catch(e) {}
+}
+function showHistory(){
+  const dd = document.getElementById('historyDropdown');
+  const h = loadHistory();
+  if (h.length === 0) { dd.classList.remove('show'); return; }
+  dd.innerHTML = h.map(s => `<div>${s}</div>`).join('');
+  dd.querySelectorAll('div').forEach(el => {
+    el.addEventListener('click', () => {
+      document.getElementById('ingredientsInput').value = el.textContent;
+      dd.classList.remove('show');
+      document.getElementById('detectBtn').click();
+    });
+  });
+  dd.classList.add('show');
+}
+document.getElementById('ingredientsInput').addEventListener('focus', showHistory);
+document.getElementById('ingredientsInput').addEventListener('blur', () => {
+  setTimeout(() => document.getElementById('historyDropdown').classList.remove('show'), 200);
+});
+document.getElementById('ingredientsInput').addEventListener('input', () => {
+  document.getElementById('historyDropdown').classList.remove('show');
+});
+// Save to history on detect
+document.getElementById('detectBtn').addEventListener('click', () => {
+  setTimeout(() => {
+    const val = document.getElementById('ingredientsInput').value.trim();
+    if (val) {
+      const h = loadHistory();
+      const idx = h.indexOf(val);
+      if (idx > -1) h.splice(idx, 1);
+      h.unshift(val);
+      saveHistory(h);
+    }
+  }, 100);
+});
+
+/* ---------------- Reset all ---------------- */
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (!confirm('Clear all ingredients and preferences?')) return;
+  document.getElementById('ingredientsInput').value = '';
+  document.getElementById('quantitiesInput').value = '';
+  document.getElementById('avoidInput').value = '';
+  document.getElementById('mealType').value = 'Dinner';
+  document.getElementById('skillLevel').value = 'Intermediate';
+  document.getElementById('spiceLevel').value = '1';
+  document.getElementById('spiceVal').textContent = 'Medium';
+  document.getElementById('cookTimeSlider').value = '2';
+  document.getElementById('cookTimeVal').textContent = 'Under 45 min';
+  document.getElementById('healthGoal').value = 'Balanced';
+  document.getElementById('numPeople').value = '2';
+  selectedCuisines = new Set(["Surprise Me"]);
+  document.querySelectorAll('#cuisinePills .pill').forEach(p => p.classList.toggle('active', p.textContent === 'Surprise Me'));
+  document.querySelectorAll('#dietaryGrid input').forEach(c => c.checked = false);
+  document.querySelectorAll('#equipmentGrid input').forEach(c => c.checked = ['Gas Stove','Pressure Cooker','Mixer Grinder'].includes(c.value));
+  ingredientList = [];
+  renderChips();
+  document.getElementById('resultsWrap').style.display = 'none';
+  document.getElementById('errorBox').style.display = 'none';
+  document.getElementById('shoppingBtn').style.display = 'none';
+  showToast('All inputs reset');
+});
+
+/* ---------------- Clear cache ---------------- */
+document.getElementById('clearCacheBtn').addEventListener('click', () => {
+  try { localStorage.removeItem(CACHE_KEY); } catch(e) {}
+  document.getElementById('clearCacheBtn').style.display = 'none';
+  showToast('Recipe cache cleared');
+});
+
+/* ---------------- Status dot / provider health ---------------- */
+function updateStatusDot(){
+  const now = Date.now();
+  const active = MODELS.filter(m => m.status === 'active' || m.cooldownUntil <= now).length;
+  const total = MODELS.length;
+  const dot = document.getElementById('statusDotColor');
+  const label = document.getElementById('statusDotLabel');
+  if (active === total) { dot.className = 'dot green'; label.textContent = 'All OK'; }
+  else if (active >= total / 2) { dot.className = 'dot yellow'; label.textContent = `${active}/${total} active`; }
+  else { dot.className = 'dot red'; label.textContent = `${active}/${total} active`; }
+}
+
+function renderStatsModal(){
+  const body = document.getElementById('statsModalBody');
+  let html = '<div style="font-size:13px;line-height:1.7;">';
+  const groups = {};
+  MODELS.forEach(m => {
+    const prov = providerName(m);
+    if (!groups[prov]) groups[prov] = [];
+    groups[prov].push(m);
+  });
+  for (const [prov, models] of Object.entries(groups)) {
+    const s = providerStats[prov];
+    const sr = s && s.r ? (s.ok / s.r * 100).toFixed(0) : '-';
+    const avg = s && s.ok ? (s.lat / s.ok / 1000).toFixed(1) : '-';
+    const active = models.filter(m => m.status === 'active' || m.cooldownUntil <= Date.now()).length;
+    html += `<div style="margin-bottom:14px;"><b>${prov}</b> <span style="color:var(--ink-faint);font-size:12px;">${active}/${models.length} active · ${s ? s.r+' calls · '+sr+'% success · '+avg+'s avg' : 'no data'}</span></div>`;
+  }
+  html += '</div>';
+  body.innerHTML = html;
+  updateStatusDot();
+}
+
+document.getElementById('statusDot').addEventListener('click', () => {
+  renderStatsModal();
+  document.getElementById('statsModalBg').classList.add('show');
+});
+
+function clearAllStats(){
+  providerStats = {};
+  saveProviderStats();
+  renderStatsModal();
+  showToast('Stats reset');
+}
+
+// Show clear cache if anything cached
+(function(){
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (raw && JSON.parse(raw) && Object.keys(JSON.parse(raw)).length > 0) {
+      document.getElementById('clearCacheBtn').style.display = 'inline-flex';
+    }
+  } catch(e) {}
+})();
+
+updateStatusDot();
+</script>
+</body>
+</html>
